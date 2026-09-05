@@ -18,7 +18,6 @@
     }
     .wrap { max-width: 1400px; width: 100%; }
 
-    /* HEADER */
     header {
       display: flex;
       flex-wrap: wrap;
@@ -60,7 +59,6 @@
       100% { transform: scale(1); opacity: 0.7; }
     }
 
-    /* GRID – 3 Spalten */
     .grid-3 {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -70,7 +68,6 @@
     @media (max-width: 1100px) { .grid-3 { grid-template-columns: 1fr 1fr; } }
     @media (max-width: 700px) { .grid-3 { grid-template-columns: 1fr; } }
 
-    /* GRID – 2 Spalten (für Orbit + Log) */
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -136,6 +133,7 @@
     button.vital:hover { background: #00ff8822; }
     button.bootlink { border-color: #6ec8ff; color: #6ec8ff; }
     button.bootlink:hover { background: #6ec8ff22; }
+    button.module-tab.active { background: rgba(80,200,255,0.18); border-color: #80c0e0; color: #d0e8f8; }
 
     canvas {
       width: 100%;
@@ -177,6 +175,8 @@
     }
     .pfad-visual .sep { color: #1a2230; }
 
+    /* FIX: mehrzeilige Log-Einträge (showAnime/showShuffle nutzen \n)
+       wurden ohne pre-wrap zu einer einzigen Zeile zusammengequetscht. */
     .log {
       height: 160px;
       overflow-y: auto;
@@ -187,6 +187,7 @@
       font-size: 10px;
       line-height: 1.5;
       color: #5a6a7a;
+      white-space: pre-wrap;
     }
     .log .entry { padding: 1px 0; border-bottom: 1px solid #0e141c; }
     .log .time { color: #2a3a4a; }
@@ -281,7 +282,6 @@
 
 <div class="wrap">
 
-  <!-- HEADER -->
   <header>
     <h1>⚡ AXIOMROOT · OS · BIOS · AXIOM · ALLE WELTEN</h1>
     <div class="badge">
@@ -290,10 +290,8 @@
     </div>
   </header>
 
-  <!-- DREI SPALTEN: PFAD / ENGINE / MAGNETO -->
   <div class="grid-3">
 
-    <!-- 1. PFAD + ORBIT -->
     <div class="card">
       <h2>🌀 PFAD · 81→9→3→9→81 · ORBIT</h2>
       <canvas id="orbitCanvas" width="420" height="420"></canvas>
@@ -321,7 +319,6 @@
       </div>
     </div>
 
-    <!-- 2. ENGINE + MOVES + AXIOME -->
     <div class="card">
       <h2>🧠 ENGINE · KERN · MOVES · AXIOME</h2>
       <div class="row"><span class="label">pump (Energie)</span><span class="value" id="pumpDisplay">0</span></div>
@@ -350,7 +347,6 @@
       </div>
     </div>
 
-    <!-- 3. MAGNETO + RAWATOR -->
     <div class="card">
       <h2>🧲 MAGNETO · RAWATOR · KRÜMMUNG</h2>
       <div class="metric-grid">
@@ -384,7 +380,6 @@
 
   </div>
 
-  <!-- ZWEI SPALTEN: LOG + BOOT-LINK -->
   <div class="grid-2">
     <div class="card">
       <h2>📜 CHRONIK</h2>
@@ -407,7 +402,18 @@
     </div>
   </div>
 
-  <!-- FOOTER -->
+  <div class="card" style="margin-top:14px;">
+    <h2>🗂 MODULE · EINGEBETTETE SYSTEME</h2>
+    <div class="btn-row">
+      <button class="primary module-tab active" data-src="quecksilber-metaball.html">🧿 QUECKSILBER</button>
+      <button class="primary module-tab" data-src="planetrischer-organismus.html">🌌 ORGANISMUS</button>
+      <button class="primary module-tab" data-src="respo-schaltung.html">⚙️ RESPO-SCHALTUNG</button>
+    </div>
+    <div style="position:relative; width:100%; aspect-ratio:4/3; max-height:70vh; border-radius:16px; overflow:hidden; border:1px solid rgba(160,200,240,0.08); margin-top:8px; background:#05070c;">
+      <iframe id="moduleFrame" src="quecksilber-metaball.html" style="width:100%; height:100%; border:0;" title="eingebettetes Modul"></iframe>
+    </div>
+  </div>
+
   <div class="footer">
     <div class="stat">⚡ Energie: <span id="footerEnergy">0%</span></div>
     <div class="stat">🌀 Zahnrad: <span id="footerGear">0</span></div>
@@ -436,32 +442,25 @@ const state = {
   gear: 0,
   step: 0,
   energy: 0,
-  // Engine
   pump: 0,
   hits: 0,
-  // Moves
   lastMove: '—',
   axle: 'neutral',
   door: false,
   doo: false,
-  // Magneto / RAWATOR
   orbit: 0.5,
   suite: 0.5,
   commander: 0.5,
   admin0: 0.5,
   vital: 0.5,
   krümmung: 0,
-  // RIR / XyX
   rirResult: null,
   xyxState: null,
-  // Loop
   loopTimer: null,
   loopActive: false,
-  // Boot-Link
   bootConnected: false
 };
 
-// ─── EXPOSURE für externe Reader ────────────────────────────────
 window.STATE = state;
 
 // ================================================================
@@ -540,6 +539,9 @@ const MAGNETO = {
   getStatus(){ return { orbit:this.orbit, suite:this.suite, commander:this.commander, admin0:this.admin0, pipeline:this.pipeline, energy:this.energy, krümmung:this.krümmung, cycle:this.cycle }; }
 };
 
+window.RAWATOR = RAWATOR;
+window.MAGNETO = MAGNETO;
+
 // ================================================================
 // 5. LOG & UI
 // ================================================================
@@ -589,7 +591,6 @@ function updateUI() {
   document.getElementById('commander-wert').textContent=MAGNETO.commander.toFixed(2);
   document.getElementById('admin0-wert').textContent=MAGNETO.admin0.toFixed(2);
   document.getElementById('krümmung-wert').textContent=MAGNETO.krümmung.toFixed(3);
-  // Anime Grid
   const grid=document.getElementById('anime-grid');
   grid.innerHTML='';
   RAWATOR.anime.slice(0,9).forEach(f=>{
@@ -776,7 +777,20 @@ document.getElementById('btnShuffle').addEventListener('click',showShuffle);
 document.getElementById('btnHologramm').addEventListener('click',hologramm);
 
 // ================================================================
-// 15. INIT
+// 15. MODUL-TABS (eingebettete Systeme per iframe)
+// ================================================================
+document.querySelectorAll('.module-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.module-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const frame = document.getElementById('moduleFrame');
+    frame.src = btn.dataset.src;
+    log(`🗂 Modul gewechselt → ${btn.textContent.trim()}`, 'highlight');
+  });
+});
+
+// ================================================================
+// 16. INIT
 // ================================================================
 updateUI();
 drawOrbit();
